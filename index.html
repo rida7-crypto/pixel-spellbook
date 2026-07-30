@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>*.tasks.* — Pixel Spellbook</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent !important;
+    font-family: 'Press Start 2P', monospace;
+    image-rendering: pixelated;
+    -webkit-app-region: drag;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Explicitly define what CANNOT be dragged so it can be clicked instead.
+     Adding #taskList ensures the scrollbar buttons can be clicked! */
+  button, input, a, #ribbon, #taskList, .toolbar, .coverInner, .coverTap {
+    -webkit-app-region: no-drag; 
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* Container for the whole book */
+  #bookWrap { 
+    width: 300px; 
+    perspective: 800px; 
+    position: relative;
+  }
+
+  /* ---------- APP CLOSE DOT ---------- */
+  #close-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    z-index: 100;
+    background: #ff4c4c;
+    color: transparent;
+    border: 2px solid #2b2b2b;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  
+  #close-btn:hover {
+    background: #ff1c1c;
+  }
+
+  /* ---------- COVER ---------- */
+  #cover {
+    background:
+      radial-gradient(120% 90% at 30% 15%, #4A41A8 0%, #3C3489 45%, #2E2870 100%);
+    border: 4px solid #26215C;
+    border-radius: 0;
+    padding: 2.2rem 1.25rem 1.6rem;
+    position: relative;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow:
+      inset 0 0 0 3px #7F77DD,
+      inset 0 0 0 6px #2E2870,
+      0 10px 24px #00000066;
+    transition: transform .15s ease;
+    overflow: hidden;
+  }
+
+  /* corner brackets, plate-armor style */
+  .corner {
+    position: absolute;
+    width: 16px; height: 16px;
+    border: 3px solid #C9A227;
+    opacity: .85;
+  }
+  .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+  .corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+  .corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+  /* faint pixel starfield scattered on the cover */
+  .stars {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20px 30px, #CFC9FF 100%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 70px 80px, #CFC9FF 100%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 130px 20px, #CFC9FF 100%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 200px 110px, #CFC9FF 100%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 240px 45px, #CFC9FF 100%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 40px 160px, #CFC9FF 100%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 170px 190px, #CFC9FF 100%, transparent 100%);
+    opacity: .55;
+  }
+
+  /* candle on the cover */
+  #coverCandle {
+    position: absolute;
+    bottom: 16px;
+    right: 22px;
+    width: 24px;
+    height: 34px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  #coverCandle svg { width: 100%; height: 100%; display: block; }
+  #coverFlame {
+    transform-origin: 50% 90%;
+    animation: flicker 1.6s infinite steps(6);
+    filter: drop-shadow(0 0 5px #FFB238AA) drop-shadow(0 0 12px #FF8A0066);
+  }
+
+  .emblem { text-align: center; margin-top: 6px; pointer-events: none; }
+  .emblem i {
+    font-size: 30px;
+    color: #F2C94C;
+    filter: drop-shadow(0 0 6px #F2C94C88);
+    animation: emblemGlow 2.4s ease-in-out infinite;
+  }
+  @keyframes emblemGlow {
+    0%, 100% { filter: drop-shadow(0 0 4px #F2C94C77); transform: scale(1); }
+    50%      { filter: drop-shadow(0 0 10px #F2C94Cbb); transform: scale(1.08); }
+  }
+
+  .coverInner {
+    border: 3px solid #EEEDFE;
+    box-shadow: inset 0 0 0 2px #4A41A8, 0 0 0 1px #12103166;
+    padding: 1.1rem 0.75rem 1.3rem;
+    text-align: center;
+    margin-top: 0.9rem;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.2s ease;
+  }
+  
+  .coverInner:hover, .coverInner:active {
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(0.98);
+  }
+
+  .coverInner p.title { color: #EEEDFE; font-size: 12px; line-height: 1.8; margin: 0; letter-spacing: 1px; }
+  .coverInner p.subtitle { color: #9F97E8; font-size: 7px; margin: 8px 0 0; letter-spacing: 1.5px; text-transform: uppercase; }
+  #coverCount { color: #F2C94C; font-size: 9px; margin: 12px 0 0; }
+  
+  .coverTap { 
+    color: #CECBF6; 
+    font-size: 8px; 
+    text-align: center; 
+    margin: 0; 
+    letter-spacing: 1px; 
+    cursor: pointer; 
+  }
+  
+  .coverTap:hover {
+    color: #FFFFFF;
+  }
+
+  /* ---------- PAGE VIEW ---------- */
+  #pageView {
+    display: none;
+    background:
+      repeating-linear-gradient(#FAEEDA 0px, #FAEEDA 22px, #EBDCBE 23px, #FAEEDA 24px),
+      linear-gradient(90deg, transparent 0, transparent 30px, #C88B6A55 30px, #C88B6A55 32px, transparent 32px);
+    border: 4px solid #412402;
+    padding: 1.1rem 1.1rem 1.1rem 2.1rem;
+    position: relative;
+    box-shadow: inset 0 0 24px #B4834122, 0 8px 18px #00000055;
+    animation: pageOpen .22s ease;
+  }
+  @keyframes pageOpen {
+    from { opacity: 0; transform: rotateY(-8deg) scale(0.97); }
+    to   { opacity: 1; transform: rotateY(0) scale(1); }
+  }
+
+  /* Inner bookmark ribbon */
+  #ribbon {
+    position: absolute;
+    top: -4px;
+    right: 24px;
+    width: 24px;
+    height: 32px;
+    background: #993556;
+    clip-path: polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);
+    cursor: pointer;
+    transform-origin: top center;
+    transition: transform .18s ease;
+  }
+  #ribbon:hover, #ribbon:focus-visible {
+    transform: translateY(-6px) rotate(8deg);
+  }
+
+  /* pixel candle, flickering in the corner (inner page) */
+  #candle {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 18px;
+    height: 30px;
+    pointer-events: none;
+  }
+  #candle svg { width: 100%; height: 100%; display: block; }
+  #flame {
+    transform-origin: 50% 90%;
+    animation: flicker 1.6s infinite steps(6);
+    filter: drop-shadow(0 0 5px #FFB238AA) drop-shadow(0 0 9px #FF8A0066);
+  }
+  @keyframes flicker {
+    0%   { transform: scaleY(1) translateX(0); opacity: 1; }
+    16%  { transform: scaleY(0.9) translateX(-1px); opacity: .85; }
+    33%  { transform: scaleY(1.08) translateX(1px); opacity: 1; }
+    50%  { transform: scaleY(0.95) translateX(0); opacity: .9; }
+    66%  { transform: scaleY(1.1) translateX(-1px); opacity: 1; }
+    83%  { transform: scaleY(0.92) translateX(1px); opacity: .8; }
+    100% { transform: scaleY(1) translateX(0); opacity: 1; }
+  }
+
+  #pageCount { font-size: 8px; color: #854F0B; margin: 0 0 14px; padding-left: 22px; }
+
+  /* SCROLLBAR & LIST STYLES */
+  #taskList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 40px;
+    max-height: 220px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom Scrollbar Track */
+  #taskList::-webkit-scrollbar { 
+    width: 12px; 
+  }
+  #taskList::-webkit-scrollbar-track { 
+    background: #EBDCBE; 
+    border: 2px solid #BA7517; 
+  }
+  /* Custom Scrollbar Thumb */
+  #taskList::-webkit-scrollbar-thumb { 
+    background: #BA7517; 
+    border: 2px solid #854F0B; 
+  }
+  
+  /* Custom Scrollbar Buttons */
+  #taskList::-webkit-scrollbar-button:single-button {
+    background-color: #EBDCBE;
+    display: block;
+    height: 12px;
+    width: 12px;
+    border: 2px solid #BA7517;
+  }
+  /* Hover & Active states for buttons */
+  #taskList::-webkit-scrollbar-button:single-button:hover {
+    background-color: #F6EFDF;
+  }
+  #taskList::-webkit-scrollbar-button:single-button:active {
+    background-color: #CFA672;
+  }
+  
+  /* Up Arrow */
+  #taskList::-webkit-scrollbar-button:single-button:vertical:decrement {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><polygon points='5,2 1,8 9,8' fill='%23854F0B'/></svg>");
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  /* Down Arrow */
+  #taskList::-webkit-scrollbar-button:single-button:vertical:increment {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><polygon points='1,2 9,2 5,8' fill='%23854F0B'/></svg>");
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .taskRow { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    cursor: pointer; 
+    position: relative; 
+    transition: opacity 0.2s;
+  }
+  .taskRow.dragging {
+    opacity: 0.4;
+  }
+  .drag-handle {
+    color: #BA7517;
+    cursor: grab;
+    font-size: 14px;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .box {
+    width: 18px; height: 18px; border: 2px solid #412402; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .label { font-size: 9px; line-height: 1.6; word-break: break-word; }
+
+  /* sparkles on check */
+  .sparkle {
+    position: absolute;
+    left: 2px; top: 2px;
+    font-size: 10px;
+    color: #F2B705;
+    pointer-events: none;
+    animation: sparklePop .55s ease forwards;
+  }
+  @keyframes sparklePop {
+    0%   { opacity: 1; transform: translate(0,0) scale(0.5) rotate(0deg); }
+    100% { opacity: 0; transform: var(--sp-end) scale(1.3) rotate(45deg); }
+  }
+
+  #addRow { display: none; margin-top: 12px; padding-left: 22px; }
+  #addInput {
+    width: 100%; font-family: 'Press Start 2P', monospace; font-size: 9px;
+    border-radius: 0; border: 2px solid #412402; padding: 6px; background: #FFF8EC;
+  }
+
+  .toolbar {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-top: 1.4rem; padding-top: 12px; border-top: 3px dashed #BA7517;
+    padding-left: 22px;
+  }
+  .toolbar .left { display: flex; gap: 10px; }
+  .toolGroup { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .toolbar button {
+    padding: 7px 9px; border-radius: 0; border: 2px solid #412402;
+    background: #EBDCBE; cursor: pointer; transition: transform .1s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .toolbar button:active { transform: scale(0.92); }
+  .toolbar button.active { background: #97C459; box-shadow: 0 0 0 2px #4C7A22 inset; }
+  .toolLabel { font-size: 6px; color: #854F0B; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  #modeHint { font-size: 8px; color: #BA7517; margin: 10px 0 0 0; padding-left: 22px; min-height: 14px; }
+
+  .renameInput {
+    font-family: 'Press Start 2P', monospace; font-size: 9px; width: 100%;
+    border-radius: 0; border: 2px solid #412402; padding: 4px; background: #FFF8EC;
+  }
+</style>
+</head>
+<body>
+
+<div id="bookWrap">
+  <button id="close-btn" aria-label="Close App">X</button>
+
+  <div id="cover">
+    <div class="stars"></div>
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <div id="coverCandle" aria-hidden="true">
+      <svg viewBox="0 0 24 34">
+        <rect x="0" y="32" width="24" height="2" fill="#EADFC8"/>
+        <rect x="2" y="30" width="20" height="2" fill="#EADFC8"/>
+        <rect x="4" y="28" width="16" height="2" fill="#EADFC8"/>
+        <rect x="7" y="16" width="10" height="12" fill="#EADFC8"/>
+        <rect x="7" y="16" width="10" height="2" fill="#C9B98F"/>
+        <rect x="11" y="10" width="2" height="6" fill="#5C4326"/>
+        <g id="coverFlame">
+          <rect x="9" y="2" width="6" height="6" fill="#FF7A00"/>
+          <rect x="10" y="0" width="4" height="4" fill="#FFD23F"/>
+          <rect x="11" y="4" width="2" height="4" fill="#FFF3B0"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="emblem"><i class="ti ti-sparkles" aria-hidden="true"></i></div>
+
+    <div class="coverInner" role="button" tabindex="0" aria-label="Open spellbook">
+      <p class="title">*.tasks.*</p>
+      <p class="subtitle">a grimoire of chores</p>
+      <p id="coverCount"></p>
+    </div>
+    
+    <p class="coverTap" role="button" tabindex="0">[ click here to open ]</p>
+  </div>
+
+  <div id="pageView">
+    <div id="ribbon" role="button" tabindex="0" aria-label="Close spellbook"></div>
+
+    <div id="candle" aria-hidden="true">
+      <svg viewBox="0 0 18 30">
+        <rect x="4" y="16" width="10" height="12" fill="#EADFC8"/>
+        <rect x="4" y="16" width="10" height="2" fill="#C9B98F"/>
+        <rect x="8" y="10" width="2" height="6" fill="#5C4326"/>
+        <g id="flame">
+          <rect x="6" y="2" width="6" height="6" fill="#FF7A00"/>
+          <rect x="7" y="0" width="4" height="4" fill="#FFD23F"/>
+          <rect x="8" y="4" width="2" height="4" fill="#FFF3B0"/>
+        </g>
+      </svg>
+    </div>
+
+    <h2 class="sr-only">A pixel-art magical spellbook to-do app. Closed by default; tap to open the page, check off tasks, add new ones with the ink bottle, and use the quill or eraser tools.</h2>
+
+    <p id="pageCount"></p>
+
+    <div id="taskList"></div>
+
+    <div id="addRow">
+      <input id="addInput" type="text" placeholder="write a task" />
+    </div>
+
+    <div class="toolbar">
+      <div class="left">
+        <div class="toolGroup">
+          <button id="penBtn" aria-label="Rename a task"><i class="ti ti-pencil" aria-hidden="true"></i></button>
+          <span class="toolLabel">Quill</span>
+        </div>
+        <div class="toolGroup">
+          <button id="eraserBtn" aria-label="Delete a task"><i class="ti ti-eraser" aria-hidden="true"></i></button>
+          <span class="toolLabel">Erase</span>
+        </div>
+      </div>
+      <div class="toolGroup">
+        <button id="inkBtn" aria-label="Add a task"><i class="ti ti-droplet" aria-hidden="true"></i></button>
+        <span class="toolLabel">Ink</span>
+      </div>
+    </div>
+    <p id="modeHint"></p>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById('close-btn').addEventListener('click', () => {
+    window.close(); // Closes the app natively
+  });
+
+// Load saved tasks from LocalStorage, or start empty if none exist
+var tasks = JSON.parse(localStorage.getItem('pixelSpellbookTasks')) || [];
+var mode = null;
+var nextId = tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+
+/* ---------------- sound effects ---------------- */
+var audioCtx = null;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playGentleChime(){
+  var ctx = getCtx();
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(freq, idx){
+    var osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    var gain = ctx.createGain();
+    var start = now + idx * 0.08;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.05, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.45);
+  });
+}
+
+function playTypingTap(){
+  var ctx = getCtx();
+  var now = ctx.currentTime;
+  var osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(300 + Math.random() * 50, now);
+  osc.frequency.exponentialRampToValueAtTime(100, now + 0.03);
+  var gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.03, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.04);
+}
+
+function playCheckChime(){
+  var ctx = getCtx();
+  [880, 1318.5].forEach(function(freq, idx){
+    var osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    var gain = ctx.createGain();
+    var start = ctx.currentTime + idx * 0.06;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.26);
+  });
+}
+
+/* ---------------- sparkles ---------------- */
+function spawnSparkles(box){
+  var chars = ['✦','✧','⋆'];
+  for(var i = 0; i < 5; i++){
+    var s = document.createElement('span');
+    s.className = 'sparkle';
+    s.textContent = chars[Math.floor(Math.random() * chars.length)];
+    var angle = Math.random() * Math.PI * 2;
+    var dist = 14 + Math.random() * 10;
+    s.style.setProperty('--sp-end', 'translate(' + (Math.cos(angle) * dist) + 'px,' + (Math.sin(angle) * dist) + 'px)');
+    s.style.left = (20 + Math.random() * 6) + 'px'; 
+    s.style.top = (2 + Math.random() * 6) + 'px';
+    box.appendChild(s);
+    (function(el){ setTimeout(function(){ el.remove(); }, 600); })(s);
+  }
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  localStorage.setItem('pixelSpellbookTasks', JSON.stringify(tasks));
+
+  var list = document.getElementById('taskList');
+  list.innerHTML = '';
+  
+  var total = tasks.length;
+  var done = tasks.filter(function(t){return t.done;}).length;
+  
+  var countText = (total === 0) ? "add tasks" : done + " / " + total + " done";
+  document.getElementById('pageCount').textContent = countText;
+  document.getElementById('coverCount').textContent = countText;
+
+  tasks.forEach(function(t){
+    var row = document.createElement('div');
+    row.className = 'taskRow';
+    row.draggable = true; 
+    row.dataset.id = t.id; 
+
+    row.addEventListener('dragstart', function(e) {
+      setTimeout(() => row.classList.add('dragging'), 0);
+    });
+    row.addEventListener('dragend', function() {
+      row.classList.remove('dragging');
+    });
+
+    var handle = document.createElement('i');
+    handle.className = 'ti ti-grip-vertical drag-handle';
+    handle.setAttribute('aria-hidden', 'true');
+
+    var box = document.createElement('div');
+    box.className = 'box';
+    box.style.background = t.done ? '#97C459' : '#FAEEDA';
+    if(t.done){ box.innerHTML = '<i class="ti ti-check" style="font-size:13px;color:#173404;" aria-hidden="true"></i>'; }
+
+    var label = document.createElement('span');
+    label.textContent = t.text;
+    label.className = 'label';
+    label.style.cssText = t.done ? 'text-decoration:line-through;color:#B4B2A9;' : 'color:#412402;';
+
+    row.appendChild(handle);
+    row.appendChild(box);
+    row.appendChild(label);
+
+    row.onclick = function(e){
+      if (e.target === handle) return; 
+
+      if(mode === 'erase'){
+        tasks = tasks.filter(function(x){ return x.id !== t.id; });
+        render();
+      } else if(mode === 'pen'){
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = t.text;
+        input.className = 'renameInput';
+        box.style.display = 'none';
+        handle.style.display = 'none';
+        row.replaceChildren(input);
+        input.focus();
+        
+        input.addEventListener('keydown', function(e){
+          if(e.key.length === 1 || e.key === 'Backspace') playTypingTap();
+          if(e.key === 'Enter'){ t.text = input.value || t.text; mode = null; syncModeButtons(); render(); }
+        });
+        input.onblur = function(){ t.text = input.value || t.text; mode = null; syncModeButtons(); render(); };
+      } else {
+        t.done = !t.done;
+        if(t.done){ spawnSparkles(box); playCheckChime(); }
+        render();
+      }
+    };
+    list.appendChild(row);
+  });
+}
+
+/* ---------------- Drag and Drop Logic ---------------- */
+const taskListContainer = document.getElementById('taskList');
+
+taskListContainer.addEventListener('dragover', function(e) {
+  e.preventDefault(); 
+  const afterElement = getDragAfterElement(taskListContainer, e.clientY);
+  const draggable = document.querySelector('.dragging');
+  if (draggable) {
+    if (afterElement == null) {
+      taskListContainer.appendChild(draggable);
+    } else {
+      taskListContainer.insertBefore(draggable, afterElement);
+    }
+  }
+});
+
+taskListContainer.addEventListener('drop', function(e) {
+  e.preventDefault();
+  const rows = document.querySelectorAll('.taskRow');
+  const reorderedTasks = [];
+  
+  rows.forEach(row => {
+    const id = parseInt(row.dataset.id);
+    const task = tasks.find(t => t.id === id);
+    if(task) reorderedTasks.push(task);
+  });
+  
+  tasks = reorderedTasks;
+  render(); 
+});
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.taskRow:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function syncModeButtons(){
+  document.getElementById('penBtn').classList.toggle('active', mode === 'pen');
+  document.getElementById('eraserBtn').classList.toggle('active', mode === 'erase');
+  document.getElementById('modeHint').textContent =
+    mode === 'erase' ? '> tap a task to erase it' :
+    mode === 'pen'   ? '> tap a task to rewrite it' : '';
+}
+
+/* ---------------- open / close book ---------------- */
+function openBook(){
+  playGentleChime();
+  setTimeout(function(){
+    document.getElementById('cover').style.display = 'none';
+    document.getElementById('pageView').style.display = 'block';
+  }, 100);
+}
+
+function closeBook(){
+  playGentleChime();
+  document.getElementById('pageView').style.display = 'none';
+  document.getElementById('cover').style.display = 'flex';
+}
+
+document.querySelector('.coverInner').addEventListener('click', openBook);
+document.querySelector('.coverTap').addEventListener('click', openBook);
+document.querySelector('.coverInner').addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' ') openBook(); });
+
+document.getElementById('ribbon').addEventListener('click', closeBook);
+document.getElementById('ribbon').addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' ') closeBook(); });
+
+document.getElementById('eraserBtn').onclick = function(){
+  mode = (mode === 'erase') ? null : 'erase';
+  syncModeButtons();
+};
+document.getElementById('penBtn').onclick = function(){
+  mode = (mode === 'pen') ? null : 'pen';
+  syncModeButtons();
+};
+document.getElementById('inkBtn').onclick = function(){
+  var row = document.getElementById('addRow');
+  row.style.display = 'block';
+  var input = document.getElementById('addInput');
+  input.value = '';
+  input.focus();
+};
+document.getElementById('addInput').addEventListener('keydown', function(e){
+  if(e.key.length === 1 || e.key === 'Backspace') playTypingTap();
+  if(e.key === 'Enter' && e.target.value.trim()){
+    tasks.push({id: nextId++, text: e.target.value.trim(), done:false});
+    document.getElementById('addRow').style.display = 'none';
+    render();
+    
+    // Smooth scroll to the bottom right after the new task renders
+    var list = document.getElementById('taskList');
+    list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+  }
+});
+render();
+</script>
+</body>
+</html>
