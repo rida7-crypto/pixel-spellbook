@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #121a29; rx: 16px; }
+      .pixel { shape-rendering: crispEdges; }
+      /* Warm Light Aura Pulse */
+      @keyframes auraGlow {
+        0%, 100% { opacity: 0.35; transform: scale(0.96); }
+        50%      { opacity: 0.65; transform: scale(1.08); }
+      }
+      .flame-aura {
+        animation: auraGlow 2.2s ease-in-out infinite;
+        transform-box: fill-box;
+        transform-origin: 50% 50%;
+      }
+      /* Candle Flame Flickering Motion */
+      @keyframes flameFlicker {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        25%      { transform: translate(-1px, -1px) scale(1.05, 0.95); }
+        50%      { transform: translate(1px, -2px) scale(0.95, 1.08); }
+        75%      { transform: translate(-0.5px, 0.5px) scale(1.02, 1); }
+      }
+      .flame {
+        animation: flameFlicker 0.35s steps(2, jump-none) infinite;
+        transform-box: fill-box;
+        transform-origin: 50% 100%;
+      }
+    </style>
+  </defs>
+  <!-- Dark Background Container -->
+  <rect class="bg" width="200" height="200"/>
+  <g transform="translate(36, 20) scale(2)">
+    <!-- Soft Warm Light Aura Glow -->
+    <circle class="flame-aura" cx="32" cy="22" r="18" fill="#ffd166" filter="blur(4px)"/>
+    <!-- Brass Holder Ring Handle -->
+    <rect class="pixel" x="12" y="52" width="6" height="8" fill="none" stroke="#c9973b" stroke-width="2"/>
+
+    <!-- Brass Candleholder Base -->
+    <rect class="pixel" x="18" y="56" width="28" height="4" fill="#c9973b"/>
+    <rect class="pixel" x="16" y="58" width="32" height="3" fill="#8b6b2f"/>
+    <rect class="pixel" x="22" y="52" width="20" height="4" fill="#e3b782"/>
+    <!-- Candle Body -->
+    <rect class="pixel" x="25" y="28" width="14" height="24" fill="#fceade"/>
+    <rect class="pixel" x="25" y="28" width="3" height="24" fill="#ffffff"/> <!-- Highlight -->
+    <rect class="pixel" x="36" y="28" width="3" height="24" fill="#e3b782"/> <!-- Shadow -->
+    <!-- Dripping Wax Details -->
+    <rect class="pixel" x="24" y="32" width="2" height="6" fill="#fceade"/>
+    <rect class="pixel" x="33" y="28" width="3" height="8" fill="#ffffff"/>
+    <rect class="pixel" x="38" y="30" width="2" height="4" fill="#e3b782"/>
+    <!-- Candle Wick -->
+    <rect class="pixel" x="31" y="24" width="2" height="4" fill="#111111"/>
+    <!-- Animated Flickering Flame -->
+    <g class="flame">
+      <!-- Outer Flame (Orange) -->
+      <polygon class="pixel" points="32,10 36,17 36,23 28,23 28,17" fill="#ff9ecd"/>
+      <polygon class="pixel" points="32,12 35,18 35,23 29,23 29,18" fill="#ff4d6d"/>
+
+      <!-- Inner Flame (Yellow/Golden Core) -->
+      <polygon class="pixel" points="32,15 34,19 34,23 30,23 30,19" fill="#ffd166"/>
+      <!-- Bright White Core -->
+      <rect class="pixel" x="31" y="20" width="2" height="3" fill="#ffffff"/>
+    </g>
+  </g>
+</svg>
