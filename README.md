@@ -1,5 +1,6 @@
 <div align="center">
 
+<img src="./spellbook-corner.svg" width="72" align="left" alt="floating spellbook corner mascot">
 <img src="./candle-corner.svg" width="72" align="right" alt="flickering candle corner mascot">
 
 # Pixel Spellbook
@@ -28,6 +29,7 @@ What sets it apart from a typical task manager is that it isn't a window at all 
 - **A true floating desktop companion** — transparent, borderless, always-on-top, and fully draggable anywhere on screen; it never feels like a normal app window, more like a spellbook left open beside you
 - **Pixel-art grimoire aesthetic** — a custom-drawn interface styled around candlelight, parchment, and hand-drawn magical detail
 - **Living candle animation** — a hand-pixeled flame that flickers continuously with its own soft, pulsing aura, rather than a static icon
+- **The book itself floats too** — a subtle bob and glow on the spellbook icon, a small visual echo of the fact that the whole app hovers rather than sits in a fixed window
 - **Lightweight task management** — add, complete, and manage your to-dos ("spells") without the overhead of a full productivity suite
 - **Minimal, distraction-free interface** — designed to sit quietly on your desktop without pulling focus from your actual work
 
@@ -104,7 +106,9 @@ npm run make
 
 ## Preview
 
-https://github.com/user-attachments/assets/91904ba7-dc30-4360-aa7b-bf6e7de5eddc
+
+https://github.com/user-attachments/assets/29dc762d-0708-4eb8-ad00-812e7f21baf7
+
 
 ---
 
