@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
   <defs>
     <style>
-      .bg { fill: #121a29; rx: 16px; }
       .pixel { shape-rendering: crispEdges; }
       /* Warm Light Aura Pulse */
       @keyframes auraGlow {
@@ -27,8 +26,6 @@
       }
     </style>
   </defs>
-  <!-- Dark Background Container -->
-  <rect class="bg" width="200" height="200"/>
   <g transform="translate(36, 20) scale(2)">
     <!-- Soft Warm Light Aura Glow -->
     <circle class="flame-aura" cx="32" cy="22" r="18" fill="#ffd166" filter="blur(4px)"/>
