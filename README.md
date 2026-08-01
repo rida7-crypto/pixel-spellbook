@@ -1,3 +1,6 @@
+![Release](https://img.shields.io/github/v/release/rida7-crypto/pixel-spellbook?include_prereleases&color=9b59b6&label=Release)
+![Downloads](https://img.shields.io/github/downloads/rida7-crypto/pixel-spellbook/total?color=8e44ad&label=Downloads)
+![Platform](https://img.shields.io/badge/platform-Windows-blue)
 <div align="center">
 
 <img src="./spellbook-corner.svg" width="72" align="left" alt="floating spellbook corner mascot">
